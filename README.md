@@ -7,3 +7,9 @@ The extra funky little feature of having audio fx being played locally on the ke
 ![PXL_20250710_151807012](https://github.com/user-attachments/assets/13076207-b315-4b91-a7cb-812efdf57400)
 ### Block diagram
 <img width="1067" height="976" alt="Screenshot 2024-06-14 123204" src="https://github.com/user-attachments/assets/d4ee0573-bb19-4d8e-b12d-0d8cdd5fbebd" />
+
+## Issues as of 07/2024
+
+* Encoder for PC system audio glitches, resulting in inconsistent controls
+* Audio front-end has not been tested, operation not verified 
+* SD card reading has not been tested, operation not verified 
