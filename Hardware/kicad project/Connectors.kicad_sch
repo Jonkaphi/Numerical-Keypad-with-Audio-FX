@@ -2713,8 +2713,8 @@
 		(uuid 135a289f-a142-4c0d-9405-8b61fd514ff1)
 	)
 	(rectangle
-		(start 158.75 26.67)
-		(end 265.43 119.38)
+		(start 160.02 26.67)
+		(end 270.51 132.08)
 		(stroke
 			(width 0)
 			(type default)
@@ -2738,13 +2738,27 @@
 	)
 	(text "USB-C port"
 		(exclude_from_sim no)
-		(at 250.698 110.744 0)
+		(at 255.016 30.734 0)
 		(effects
 			(font
 				(size 2.54 2.54)
 			)
 		)
 		(uuid "0ceed595-31b6-4c23-b6c3-7f4fa88a746b")
+	)
+	(text "NOTE: THE USB SELECTED USB PORT (J2) IS NOT VERTICALLY OFFSET, \nIF YOU WANT TO USE IT MAKE SURE TO ADD A CUT OFF IN THE PCB.\nMY PCB HAS A MISTAKE!!!!\n"
+		(exclude_from_sim no)
+		(at 163.322 121.92 0)
+		(effects
+			(font
+				(size 1.778 1.778)
+				(thickness 0.254)
+				(bold yes)
+				(color 255 11 57 1)
+			)
+			(justify left)
+		)
+		(uuid "badf50c7-c3e4-4565-984e-81d8a89afd72")
 	)
 	(text "SWD header"
 		(exclude_from_sim no)
@@ -2758,7 +2772,7 @@
 	)
 	(text "SD-Card slot"
 		(exclude_from_sim no)
-		(at 37.846 28.194 0)
+		(at 116.586 25.146 0)
 		(effects
 			(font
 				(size 2.54 2.54)
