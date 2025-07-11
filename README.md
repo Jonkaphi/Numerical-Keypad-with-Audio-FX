@@ -8,7 +8,7 @@ The extra funky little feature of having audio fx being played locally on the ke
 
 
 ## Issues as of 07/2024
-
+* Current USB port part is not vertically offset, which collides with the PCB, read "Connectors" page in the schematic
 * Encoder for PC system audio glitches, resulting in inconsistent controls
 * Audio front-end has not been tested, operation not verified 
 * SD card reading has not been tested, operation not verified 
