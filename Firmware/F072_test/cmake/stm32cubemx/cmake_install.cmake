@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/yoan/Documents/GitHub/Keyboard_stm32/STM32_keyboard_kicad/Code Dev/F072_test/cmake/stm32cubemx
+# Install script for directory: C:/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/F072_test/cmake/stm32cubemx
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,6 +34,6 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "C:/ST/STM32CubeCLT_1.16.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.exe")
+  set(CMAKE_OBJDUMP "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.exe")
 endif()
 
