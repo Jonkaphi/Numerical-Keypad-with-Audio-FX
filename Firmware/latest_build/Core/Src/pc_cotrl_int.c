@@ -23,13 +23,18 @@ void ENC_EDGE_IT_Handler(uint16_t GPIO_Pin, IO_controls_handler keyboard)
 
     keyboard->enc_fall_edges++;
 
-    keyboard->enc_count = keyboard->enc_count+ (!(keyboard->enc_fall_edges%2) && (GPIO_Pin == ENC_A_Pin && prev_pin == ENC_B_Pin)&&((tick_current-tick_base)<300))*1 + (!(keyboard->enc_fall_edges%2) && (GPIO_Pin == ENC_B_Pin && prev_pin == ENC_A_Pin)&&((tick_current-tick_base)<300))*-1;
+    keyboard->enc_count = keyboard->enc_count+ (!(keyboard->enc_fall_edges%2) && (GPIO_Pin == ENC_A_Pin && prev_pin == ENC_B_Pin)&&((tick_current-tick_base)<encoder_timeout_ms))*1 + 
+    (!(keyboard->enc_fall_edges%2) && (GPIO_Pin == ENC_B_Pin && prev_pin == ENC_A_Pin)&&((tick_current-tick_base)<encoder_timeout_ms))*-1;
     
-    keyboard->enc_count= ((keyboard->enc_count< 100) && (keyboard->enc_count> -100)) * (keyboard->enc_count) + (keyboard->enc_count>= 100)*100 + (keyboard->enc_count<= -100)*-100;
+    keyboard->enc_count= ((keyboard->enc_count< 100) && (keyboard->enc_count> -100)) * (keyboard->enc_count) + 
+    (keyboard->enc_count>= 100)*100 + (keyboard->enc_count<= -100)*-100;
 
-    keyboard->enc_fall_edges = ((keyboard->enc_fall_edges>=2)||((tick_current-tick_base)>300))*0 + ((keyboard->enc_fall_edges<2)&&((tick_current-tick_base)<300))*keyboard->enc_fall_edges;
+    keyboard->enc_fall_edges = ((keyboard->enc_fall_edges>=2)||((tick_current-tick_base)>encoder_timeout_ms))*0 + 
+    ((keyboard->enc_fall_edges<2)&&((tick_current-tick_base)<encoder_timeout_ms))*keyboard->enc_fall_edges;
     
-    prev_pin = ((keyboard->enc_fall_edges>=2)||((tick_current-tick_base)>300))*0+((keyboard->enc_fall_edges<2)&&((tick_current-tick_base)<300))*GPIO_Pin;
+    prev_pin = ((keyboard->enc_fall_edges>=2)||((tick_current-tick_base)>encoder_timeout_ms))*0+
+    ((keyboard->enc_fall_edges<2)&&((tick_current-tick_base)<encoder_timeout_ms))*GPIO_Pin;
+    
     tick_base = tick_current;
 
   }
@@ -48,15 +53,8 @@ void PUSH_BTN_IT_Handler(uint16_t GPIO_Pin, IO_controls_handler keyboard){
   { 
     __HAL_GPIO_EXTI_CLEAR_IT(GPIO_Pin);
 
-    //static uint32_t tick_base;
-    //uint8_t temp=keyboard->controls;
-    
-   
-    
-    
-    //this line will mask the time crittical conctrols such as a double press tha forwards the next track or song
-    //keyboard->controls = ((keyboard->controls >= 3) && (((uint32_t)HAL_GetTick() - tick_base)>= 600)) * (keyboard->controls & 0xFE)+((keyboard->controls < 3))*temp;
-
+    keyboard->button_press_tick_check=(uint32_t)HAL_GetTick();
+    keyboard->populate_media_slow_controls_flag=1;
 
     //  0x09, 0xE2,        //   Usage (Mute)
     // 0x09, 0xCD,        //   Usage (Play/Pause)
@@ -68,24 +66,7 @@ void PUSH_BTN_IT_Handler(uint16_t GPIO_Pin, IO_controls_handler keyboard){
     keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin && (((keyboard->controls)&0x02)==0x02))*(1<<2);
     keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin )*(1<<1);
 
-    if((keyboard->controls&0x02)==0x02){
-      __NOP();
-    }
-    if((keyboard->controls&0x04)==0x04){
-      __NOP();
-    }
-    if((keyboard->controls&0x08)==0x08){
-      __NOP();
-    }
-      
-      
-    
-    
-    
-    
     //Mute 1, Play 1 or 0, Pause 2 or 3, Next track 4 or 5, Previous 6 or 7
-    
-    
     
   }
 }

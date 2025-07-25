@@ -162,12 +162,7 @@ void populat_HID_slow_media_controls_report(IO_controls_handler keyboard_inst){/
     keyboard_inst->sys_slow_controls_update_flag = 0;
     
     uint8_t slow_difference = ((keyboard_inst->controls&(~(0x01))) != 0);
-    if(slow_difference>0){
-        __NOP();
-    }
-
-    
-
+   
     //report id, following the collection page on line 320 in usbd_hid.c file in middleware folder
     keyboard_inst->media_slow_controls_HID_report[0] = 2;
    
@@ -185,16 +180,12 @@ void populat_HID_slow_media_controls_report(IO_controls_handler keyboard_inst){/
 
 
     keyboard_inst->media_slow_controls_HID_report[2]=0;
-
-    
-
-    
-    
-
     //mask the forward and backward functionality
     keyboard_inst->controls = (keyboard_inst->controls&(0x01));
 
-   
+    //clear flag to stop the population fucntion
+    keyboard_inst->populate_media_slow_controls_flag=0;
+
     __enable_irq();
 }
 //

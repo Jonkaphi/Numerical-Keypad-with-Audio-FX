@@ -101,7 +101,8 @@ void Error_Handler(void);
 #define ENC_A_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define POWER_ON_SDCARD HAL_GPIO_WritePin(GPIOB, CARD_SHUTDOWN_Pin, GPIO_PIN_SET);
+#define POWER_OFF_SDCARD HAL_GPIO_WritePin(GPIOB, CARD_SHUTDOWN_Pin, GPIO_PIN_RESET);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

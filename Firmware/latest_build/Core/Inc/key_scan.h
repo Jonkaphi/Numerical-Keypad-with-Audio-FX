@@ -20,6 +20,8 @@
 #define colum_size 7U
 #define row_size 5U
 
+#define play_button_timeout_ms 500UL
+
 //these codes are not used, this is a left over from an old method to implement the media controls
 // USB media codes
 #define USB_HID_SCAN_NEXT 0x01
@@ -40,6 +42,7 @@ typedef struct
     uint8_t packet_update_flag;
     uint8_t sys_fast_controls_update_flag;
     uint8_t sys_slow_controls_update_flag;
+
     uint8_t keys_HID_data_report[KEY_SCAN_HID_REPORT_KEYS_SIZE];
     int8_t media_fast_controls_HID_report[KEY_SCAN_HID_REPORT_MEDIA_SIZE];
     int8_t media_slow_controls_HID_report[KEY_SCAN_HID_REPORT_MEDIA_SIZE];//Report ID, MMKey.
@@ -47,6 +50,8 @@ typedef struct
     volatile uint8_t controls;
     volatile int8_t enc_count;
     volatile int8_t enc_fall_edges;
+    volatile uint32_t button_press_tick_check;
+    volatile uint8_t populate_media_slow_controls_flag;
 
 }IO_controls;
 

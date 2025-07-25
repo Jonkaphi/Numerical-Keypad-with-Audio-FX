@@ -4,6 +4,7 @@
 #include "key_scan.h"
 #include "main.h"
 
+#define encoder_timeout_ms 400UL
 
 /**
   * @brief  Encoder interrupt handler
