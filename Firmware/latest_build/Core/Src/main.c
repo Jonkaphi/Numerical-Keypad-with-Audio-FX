@@ -24,303 +24,380 @@
 #include "usb_device.h"
 #include "usbd_hid.h"
 #include "pc_cotrl_int.h"
-
-//#include "dac.h"
+#include "fat_dac_interface.h"
+#include "dac.h"
+#include "dma.h"
 #include "fatfs.h"
 #include "spi.h"
-
 #include "FATFS_SD.h"
-// #include "sd_functions.h"
-// #include "stdio.h"
-//#include "sd_benchmark.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
-// uint8_t bufr[80];
-// UINT br;
-
-IO_controls keyboard_inst;
+IO_controls keyboard_inst={0};
 IO_controls_handler keyboard=&keyboard_inst;
 
+FATFS fileSystem={0};
 
+#if __AUDIO_FX_ENABLED
+fat_dac wav_data_inst = {0};
+fat_dac_handler wav_data = &wav_data_inst;
+#endif
 
-//IO_controls keyboard;//initilise contents to 0
+#if __AUDIO_FX_ENABLED
+FIL audioFile={0};
+uint32_t readBytes = 0;
+//Name of the audio fx file to be played
+//The 8k Hz at 16 bit depth requires less read resulting in a more responsive button presses
+const uint8_t audiofile_path[10] = "fx_8k.wav";
+#endif
 
- //Modifyer, reserved,Keycode.....
+#if __LOGGING_ENABLED
+FIL logFile={0};
+uint32_t writtenBytes = 0;
+//Path of the log
+const uint8_t logfile_path[10] = "log.txt";
+#endif
 
-/* USER CODE END PV */
-/* USER CODE END PV */
+FRESULT FR_stat={0};
 
-/* Private function prototypes -----------------------------------------------*/
-static void SD_Card_Test(void);
+STATE CARD_PRESENT=0;
+STATE CURR_STATE=KEYBOARD_SCAN;
+
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
-{
-
-  /* USER CODE BEGIN 1 */
-  
- 
-  
-
-  /* USER CODE END 1 */
-
+{    
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-   RCC->APB2ENR |= RCC_APB2ENR_DBGMCUEN; //enables suspension of the APB2 bus dduring debug
-  /* USER CODE END SysInit */
-
+  #if __DEBUG
+  //enables suspension of the APB2 bus during debug
+  //!ONLY TO BE USED DURING DEBUGING
+  RCC->APB2ENR |= RCC_APB2ENR_DBGMCUEN; 
+  #endif
+    
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
   MX_LED_TIM_Init();
   MX_SPI1_Init();
 
-  //MX_DAC_Init();
-  //MX_FATFS_Init();
-  //MX_FATFS_Init();
- 
-  //Test The SD Card
+  //IMPORTANT ALWAYS SETUP DMA BEFORE THE DAC
+  #if __AUDIO_FX_ENABLED
+  MX_DMA_Init();
+  MX_DAC_Init();
+  #endif
   
-
-  keyboard->controls = 0;
-  keyboard->enc_count = 0;// there is problems with iveflows and underflows
-  keyboard->packet_update_flag = 0;
-  keyboard->highest_element = 0;
-  keyboard->sys_fast_controls_update_flag = 0;
-  keyboard->sys_slow_controls_update_flag = 0;
-  keyboard->enc_fall_edges = 0;
-  keyboard->button_press_tick_check=0;
-  keyboard->populate_media_slow_controls_flag=0;
-
-
+  MX_FATFS_Init();
+  POWER_OFF_AUDIO_AMP;
+  
+  #if __AUDIO_FX_ENABLED
+  //Variables for controls of the streaming of the audio
+  uint16_t dataOffset = 0;
+  uint16_t timer_sample_rate_period=0;
+  uint16_t temp_size_check=0;
+  uint32_t file_sample_rate=0;
+  uint32_t audio_data_size=0;
+  #endif
+  
   HAL_TIM_Base_Start_IT(&led_tim);
+
   HAL_Delay(500);//Delay is required since the code executes much faster than the enumeration period.
   
-  
-  
-  
- 
-  /* USER CODE BEGIN 2 */
+  //checks if card is in the reader
+  if ((HAL_GPIO_ReadPin(CARD_detect_GPIO_Port, CARD_detect_Pin))==GPIO_PIN_SET){
+    CARD_PRESENT=1;
 
-  /* USER CODE END 2 */
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+    POWER_ON_SDCARD; 
+ 
+    FR_stat = f_mount(&fileSystem, "", 1);
+    if(FR_stat!=FR_OK){
+      Error_Handler();
+    }
+
+    #if __AUDIO_FX_ENABLED
+    FR_stat = f_open(&audioFile, (char*)audiofile_path, FA_READ);
+    if(FR_stat!=FR_OK){
+      Error_Handler();
+    }
+    #endif
+
+    #if __LOGGING_ENABLED
+    //Todo: add logging system eveytime there is a error when trying to read the wav file
+    // FR_stat = f_open(&logFile, (char*)logfile_path, FA_OPEN_EXISTING|FA_WRITE|FA_READ);
+    if(FR_stat!=FR_OK){
+      if(FR_stat==FR_NO_FILE){
+        FR_stat = f_open(&logFile, (char*)logfile_path, FA_CREATE_ALWAYS|FA_WRITE|FA_READ);
+      }else{
+        Error_Handler();
+      }
+    }
+
+    //set to start of file
+    FR_stat = f_lseek(&logFile, 0);
+    if(FR_stat!=FR_OK){
+      Error_Handler();
+    }
+    #endif
+
+    //Format of the .wav file header
+    //https://blog.fileformat.com/audio/understanding-the-wav-file-header-structure-format-and-how-to-repair/
+    //Offset (Bytes)	Field	Size (Bytes)	Description
+    // 0	Chunk ID	      4	Should be “RIFF” to indicate the file format.
+    // 4	Chunk Size	    4	Size of the file minus 8 bytes for the RIFF and size field.
+    // 8	Format	        4	Should be “WAVE”.
+    // 12	Subchunk1 ID	  4	“fmt " (includes a trailing space).
+    // 16	Subchunk1 Size	4	Size of the format chunk (usually 16 for PCM).
+    // 20	Audio Format	  2	Format code (1 for PCM/uncompressed).
+    // 22	Number of Channels	2	Mono = 1, Stereo = 2, etc.
+    // 24	Sample Rate	    4	Sampling frequency (e.g., 44100 Hz).
+    // 28	Byte Rate	      4	SampleRate × NumChannels × BitsPerSample / 8.
+    // 32	Block Align	    2	NumChannels × BitsPerSample / 8.
+    // 34	Bits per Sample	2	Bit depth (e.g., 16, 24, or 32 bits).
+    // 36	Subchunk2 ID	  4	“data” — indicates the beginning of audio data.
+    // 40	Subchunk2 Size	4	Number of bytes in the data section.
+    
+    #if __AUDIO_FX_ENABLED
+    //grabs the header of the file given the sector size is 512, min data request is equal to the sector
+    FR_stat = f_read(&audioFile, wav_data->temp_wav_buff, SECTOR_SIZE, (UINT*)&readBytes);
+    if(FR_stat!=FR_OK){
+      CARD_PRESENT=0;
+      Error_Handler();
+    }
+    if(wav_data->temp_wav_buff[34] != 16U){
+      //wrong bit depth
+      CARD_PRESENT=0;
+
+      #if __LOGGING_ENABLED
+      //f_puts("Err:FFD16\r\n",&logFile);
+      f_puts("Wrong bit depth not 16 bit!\r\n",&logFile);
+      #endif
+      
+    }
+
+    file_sample_rate=(((uint32_t)wav_data->temp_wav_buff[27])<<24)|(((uint32_t)wav_data->temp_wav_buff[26])<<16)|
+    (((uint32_t)wav_data->temp_wav_buff[25])<<8)|((uint32_t)(wav_data->temp_wav_buff[24]));
+
+    //only able to play wav files are sample rates of power of two between 8 to 16 kHz
+    if (file_sample_rate%2!=0&&(file_sample_rate>16000U||file_sample_rate<8000U)){
+      CARD_PRESENT=0;
+     
+      #if __LOGGING_ENABLED
+      //f_puts("Err:FFB16\r\n",&logFile);
+      f_puts("Wrong bit rate not 16kHz!\r\n",&logFile);
+      #endif
+    }
+
+    if(CARD_PRESENT){
+      timer_sample_rate_period=GET_TIMER_PERIOD(file_sample_rate);
+      //configures the timer period to the sample rate of the .wav file
+      MX_WAV_SAMPLE_RATE_TIM_Init(DEFAULT_PRESCALER,timer_sample_rate_period);
+      
+      for (uint16_t i = 0; i < (WAV_BUF_SIZE - 3); i++)
+      {    
+        if ((wav_data->temp_wav_buff[i] == 'd') && (wav_data->temp_wav_buff[i + 1] == 'a') &&
+            (wav_data->temp_wav_buff[i + 2] == 't') && (wav_data->temp_wav_buff[i + 3] == 'a'))
+        { 
+          //sests offset value to the start of actuall audio data 
+          dataOffset = i + 8;
+          break;
+        }
+      }
+
+      audio_data_size = (((uint32_t)wav_data->temp_wav_buff[43])<<24)|(((uint32_t)wav_data->temp_wav_buff[42])<<16)|
+      (((uint32_t)wav_data->temp_wav_buff[41])<<8)|((uint32_t)(wav_data->temp_wav_buff[40]));
+
+      wav_data->wavDataSize=audio_data_size;
+      wav_data->bytes_to_read=wav_data->wavDataSize;
+     
+      POWER_ON_AUDIO_AMP;
+       
+    } 
+    #endif
+  }
+  
   while (1)
   {
     /* USER CODE END WHILE */
-    //test code to see if we can access the card
-    //current its able to detect the file system, but due to the formating required to implement it,
-    //the card becomes not accesible on mac
-    //todo:need to find a way to acces the card after setting the cludster size to 32kb
-    // POWER_ON_SDCARD;
-    // SD_Card_Test();
-    // POWER_OFF_SDCARD;
-   
-    /* USER CODE BEGIN 3 */
-   
+   switch(CURR_STATE){
+  
+    case KEYBOARD_SCAN:
+      //currelty pooling is a bit slow since the sequtial exection of the scanning functions,
+      //should make the report fucntion be called by the timmer ever 1 ms.
+      #if __AUDIO_FX_ENABLED
+      wav_data->PLAY_WAV_STATE_FLAG=(wav_data->PLAY_WAV_STATE_FLAG==0&&wav_data->DMA_START==0)*scan_keyboard(keyboard)+!((wav_data->PLAY_WAV_STATE_FLAG==0&&wav_data->DMA_START==0))*(wav_data->PLAY_WAV_STATE_FLAG);
+      #else
+      scan_keyboard(keyboard);
+      #endif
+
+      #if __AUDIO_FX_ENABLED
+      if(CARD_PRESENT){
+        if(keyboard->MUTE_FX){
+          
+          POWER_OFF_AUDIO_AMP;
+          wav_data->AUDIO_FX_ENB_FLAG=0;
+          wav_data->PLAY_WAV_STATE_FLAG=0;
+        }else{
+          
+          POWER_ON_AUDIO_AMP;
+          wav_data->AUDIO_FX_ENB_FLAG=1;
+        }
+      }
+      #endif
+
+      populate_HID_keycode_report(keyboard);
+
+      populat_HID_fast_media_controls_report(keyboard);
+
+      if((((uint32_t)HAL_GetTick()-keyboard->button_press_tick_check)>=play_button_timeout_ms)&&(keyboard->populate_media_slow_controls_flag==1)){
+        populat_HID_slow_media_controls_report(keyboard);
+      }
+
+      if(keyboard->sys_fast_controls_update_flag||keyboard->sys_slow_controls_update_flag||keyboard->packet_update_flag){
+        CURR_STATE = SEND_HID_REPORTS;
+        break;
+      }
+
+      #if __AUDIO_FX_ENABLED
+      if((((wav_data->bytes_read >= WAV_BUF_SIZE)&& (wav_data->bytes_read>0 ))||(wav_data->bytes_to_read==0&&!wav_data->PLAY_WAV_STATE_FLAG))&& (CARD_PRESENT && wav_data->AUDIO_FX_ENB_FLAG))
+      { 
     
-    
-    //currelty pooling is a bit slow since the sequtial exection of the scanning functions,
-    //should make the report fucntion be called by the timmer ever 1 ms.
-    scan_keyboard(keyboard);
+        wav_data->bytes_read=(WAV_BUF_SIZE<wav_data->bytes_read)?0:wav_data->bytes_read;
 
-    populate_HID_keycode_report(keyboard);
+        if(!wav_data->wavDataSize&&!wav_data->PLAY_WAV_STATE_FLAG){
+        
+          //set file Read pointer to the start of the audio data
+          FR_stat = f_lseek(&audioFile, dataOffset);
+          if(FR_stat!=FR_OK){
 
-    populat_HID_fast_media_controls_report(keyboard);
+            #if __LOGGING_ENABLED
+            //f_puts("Err:FFSEK\r\n",&logFile);
+            f_puts("Could not RW pointer of audio file",&logFile);
+            #endif
+            CARD_PRESENT=0;
+            Error_Handler();
+          }
 
-    if((((uint32_t)HAL_GetTick()-keyboard->button_press_tick_check)>=play_button_timeout_ms)&&(keyboard->populate_media_slow_controls_flag==1)){
-      populat_HID_slow_media_controls_report(keyboard);
-    }
+          wav_data->wavDataSize=audio_data_size;
+          wav_data->bytes_to_read=audio_data_size;
+          wav_data->requested_data=TEMP_WAV_BUF_SIZE;
+          
+          for(wav_data->curBufIdx=0; wav_data->curBufIdx<2; wav_data->curBufIdx++){
 
-    if(keyboard->packet_update_flag){
-	    USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->keys_HID_data_report, KEY_SCAN_HID_REPORT_KEYS_SIZE );
-      keyboard->packet_update_flag=0;
-    }
+            wav_data->requested_data=TEMP_WAV_BUF_SIZE;
+            for(uint8_t i=9;i<12;i++){
+                temp_size_check=(1<<i);
+                if(wav_data->wavDataSize<temp_size_check){
+                  wav_data->requested_data=temp_size_check;
+                  break;
+                }
+              }
+            
+            for(uint16_t i=0; i<TEMP_WAV_BUF_SIZE;i+=2){
+              wav_data->wavBuf[wav_data->curBufIdx][i/2] = ((uint16_t)((((uint16_t)wav_data->temp_wav_buff[i + 1]) << 8) | ((uint16_t)wav_data->temp_wav_buff[i])) + 32767);
+              wav_data->wavBuf[wav_data->curBufIdx][i/2] = (wav_data->wavBuf[wav_data->curBufIdx][i/2]*8)/(16*6);
+              
+            }
+          }
 
+          wav_data->bytes_read=0;
+          break;
+        }
 
-    //could make two sepperate report be send one for the mute and encoder, and a sepperate for the play pause forwars, backward
-    //edit: yes that helped, but it sill is ver much needed to make the sending of the reports in a DMA format.
-    if((keyboard->sys_fast_controls_update_flag)){
-      USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_fast_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);//direction of volume incremnetation radomly swicthes and button control dontw work reliably
-      keyboard->sys_fast_controls_update_flag=0; 
-    }
+        wav_data->requested_data=TEMP_WAV_BUF_SIZE;
 
+        for(uint8_t i=9;i<12;i++){
+          temp_size_check=(1<<i);
+          if(wav_data->wavDataSize<temp_size_check){
+            wav_data->requested_data=temp_size_check;
+            break;
+          }
+        }
 
-
-
-    if((keyboard->sys_slow_controls_update_flag)){
-      //TODO:
-      USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_slow_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);
-      HAL_Delay(50);
-      keyboard->media_slow_controls_HID_report[1]= (keyboard->media_slow_controls_HID_report[1] & ((0x00)));
-      USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_slow_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);
-
-      keyboard->sys_slow_controls_update_flag=0;
-    }
-  /* USER CODE END 3 */
-}
-}
-static void SD_Card_Test(void)
-{
-  FATFS FatFs;
-  FIL Fil;
-  FRESULT FR_Status;
-  FATFS *FS_Ptr;
-  UINT RWC, WWC; // Read/Write Word Counter
-  DWORD FreeClusters;
-  // uint32_t TotalSize, FreeSpace;
-  char RW_Buffer[200];
-
-  //add delay as to settel the card
-  HAL_Delay(2000);
-  do
-  {
-    //------------------[ Mount The SD Card ]--------------------
-    FR_Status = f_mount(&FatFs, "", 1);
-    if (FR_Status != FR_OK)
-    {
-      // sprintf(TxBuffer, "Error! While Mounting SD Card, Error Code: (%i)\r\n", FR_Status);
-      // UART_Print(TxBuffer);
+        FR_stat = f_read(&audioFile, wav_data->temp_wav_buff, wav_data->requested_data, (UINT*)&readBytes);
+        if(FR_stat!=FR_OK){
+          #if __LOGGING_ENABLED
+          //f_puts("Err:FFNR\r\n",&logFile);
+          f_puts("Could not read file!\r\n",&logFile);
+          #endif
+          CARD_PRESENT=0;
+          Error_Handler();
+        }
+        
+        if(wav_data->wavDataSize<SECTOR_SIZE){
+          wav_data->wavDataSize=0;
+        }else{
+          wav_data->wavDataSize-=readBytes;
+        }
+        
+        wav_data->curBufIdx=(wav_data->curBufIdx==0)?1U:0U;
+        for(uint16_t i=0; i<readBytes;i+=2)
+        {
+          wav_data->wavBuf[wav_data->curBufIdx][i/2] = ((uint16_t)((((uint16_t)wav_data->temp_wav_buff[i + 1]) << 8) | ((uint16_t)wav_data->temp_wav_buff[i])) + 32767);
+          wav_data->wavBuf[wav_data->curBufIdx][i/2] /= 16;
+        }
+      }
+      #endif  
+      
       break;
-    }
-    // sprintf(TxBuffer, "SD Card Mounted Successfully! \r\n\n");
-    // UART_Print(TxBuffer);
-    //------------------[ Get & Print The SD Card Size & Free Space ]--------------------
-    f_getfree("", &FreeClusters, &FS_Ptr);
-    // TotalSize = (uint32_t)((FS_Ptr->n_fatent - 2) * FS_Ptr->csize * 0.5);
-    // FreeSpace = (uint32_t)(FreeClusters * FS_Ptr->csize * 0.5);
-    //sprintf(TxBuffer, "Total SD Card Size: %lu Bytes\r\n", TotalSize);
-    //UART_Print(TxBuffer);
-    //sprintf(TxBuffer, "Free SD Card Space: %lu Bytes\r\n\n", FreeSpace);
-    //UART_Print(TxBuffer);
-    //------------------[ Open A Text File For Write & Write Data ]--------------------
-    //Open the file
-    // FR_Status = f_open(&Fil, "test/test.txt", FA_WRITE | FA_READ | FA_CREATE_ALWAYS);
-    // if(FR_Status != FR_OK)
-    // {
-    //   //sprintf(TxBuffer, "Error! While Creating/Opening A New Text File, Error Code: (%i)\r\n", FR_Status);
-    //   //UART_Print(TxBuffer);
-    //   break;
-    // }
-    // //sprintf(TxBuffer, "Text File Created & Opened! Writing Data To The Text File..\r\n\n");
-    // //UART_Print(TxBuffer);
-    // // (1) Write Data To The Text File [ Using f_puts() Function ]
-    // //f_puts("Hello! From STM32 To SD Card Over SPI, Using f_puts()\n", &Fil);
-    // // (2) Write Data To The Text File [ Using f_write() Function ]
-    // strcpy(RW_Buffer, "Hello! From STM32 To SD Card Over SPI, Using f_write()\r\n");
-    // f_write(&Fil, RW_Buffer, strlen(RW_Buffer), &WWC);
-    // // Close The File
-    // f_close(&Fil);
-    //------------------[ Open A Text File For Read & Read Its Data ]--------------------
-    // Open The File
-    FR_Status = f_open(&Fil, "test.txt", FA_READ);
-    if(FR_Status != FR_OK)
-    {
-      //sprintf(TxBuffer, "Error! While Opening (TextFileWrite.txt) File For Read.. \r\n");
-      //UART_Print(TxBuffer);
-      break;
-    }
-    // (1) Read The Text File's Data [ Using f_gets() Function ]
-    f_gets(RW_Buffer, sizeof(RW_Buffer), &Fil);
-    //sprintf(TxBuffer, "Data Read From (TextFileWrite.txt) Using f_gets():%s", RW_Buffer);
-    //UART_Print(TxBuffer);
-    // (2) Read The Text File's Data [ Using f_read() Function ]
-    f_read(&Fil, RW_Buffer, f_size(&Fil), &RWC);
-    //sprintf(TxBuffer, "Data Read From (TextFileWrite.txt) Using f_read():%s", RW_Buffer);
-    //UART_Print(TxBuffer);
-    // Close The File
-    f_close(&Fil);
-    //sprintf(TxBuffer, "File Closed! \r\n\n");
-    //UART_Print(TxBuffer);
-    //------------------[ Open An Existing Text File, Update Its Content, Read It Back ]--------------------
-    // (1) Open The Existing File For Write (Update)
-    FR_Status = f_open(&Fil, "TextFileWrite.txt", FA_OPEN_EXISTING | FA_WRITE);
-    FR_Status = f_lseek(&Fil, f_size(&Fil)); // Move The File Pointer To The EOF (End-Of-File)
-    if(FR_Status != FR_OK)
-    {
-      //sprintf(TxBuffer, "Error! While Opening (TextFileWrite.txt) File For Update.. \r\n");
-      //UART_Print(TxBuffer);
-      break;
-    }
-    // (2) Write New Line of Text Data To The File
-    FR_Status = f_puts("This New Line Was Added During Update!\r\n", &Fil);
-    f_close(&Fil);
-    memset(RW_Buffer,'\0',sizeof(RW_Buffer)); // Clear The Buffer
-    // (3) Read The Contents of The Text File After The Update
-    FR_Status = f_open(&Fil, "TextFileWrite.txt", FA_READ); // Open The File For Read
-    f_read(&Fil, RW_Buffer, f_size(&Fil), &RWC);
-    //sprintf(TxBuffer, "Data Read From (TextFileWrite.txt) After Update:%s", RW_Buffer);
-    //UART_Print(TxBuffer);
-    f_close(&Fil);
-    //------------------[ Delete The Text File ]--------------------
-    // Delete The File
-    /*
-    FR_Status = f_unlink(TextFileWrite.txt);
-    if (FR_Status != FR_OK){
-        //sprintf(TxBuffer, "Error! While Deleting The (TextFileWrite.txt) File.. \r\n");
-        UART_Print(TxBuffer);
-    }
-    */
-  } while(0);
-  //------------------[ Test Complete! Unmount The SD Card ]--------------------
-  FR_Status = f_mount(NULL, "", 0);
-  if (FR_Status != FR_OK)
-  {
-      //sprintf(TxBuffer, "Error! While Un-mounting SD Card, Error Code: (%i)\r\n", FR_Status);
-      //UART_Print(TxBuffer);
-  } else{
-      //sprintf(TxBuffer, "SD Card Un-mounted Successfully! \r\n");
-      //UART_Print(TxBuffer);
-  }
+
+    case SEND_HID_REPORTS:
+      
+      //could make two sepperate report be send one for the mute and encoder, and a sepperate for the play pause forwars, backward
+      //edit: yes that helped, but it sill is ver much needed to make the sending of the reports in a DMA format.
+      if((keyboard->sys_fast_controls_update_flag)){
+        USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_fast_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);//direction of volume incremnetation radomly swicthes and button control dontw work reliably
+        keyboard->sys_fast_controls_update_flag=0; 
+      }
+
+      if((keyboard->sys_slow_controls_update_flag)){
+        USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_slow_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);
+        HAL_Delay(50);
+        keyboard->media_slow_controls_HID_report[1]= (keyboard->media_slow_controls_HID_report[1] & ((0x00)));
+        USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->media_slow_controls_HID_report,KEY_SCAN_HID_REPORT_MEDIA_SIZE);
+        keyboard->sys_slow_controls_update_flag=0;
+      }
+
+      if(keyboard->packet_update_flag){
+        USBD_HID_SendReport(&hUsbDeviceFS,(uint8_t *)keyboard->keys_HID_data_report, KEY_SCAN_HID_REPORT_KEYS_SIZE );
+        keyboard->packet_update_flag=0;
+
+        #if __AUDIO_FX_ENABLED
+        if(CARD_PRESENT&&wav_data->AUDIO_FX_ENB_FLAG){
+          if(wav_data->PLAY_WAV_STATE_FLAG && (wav_data->bytes_to_read==audio_data_size) && wav_data->DMA_START==0){
+            HAL_DAC_Start_DMA(&hdac, DAC_FX_OUT, (uint32_t *)wav_data->wavBuf[0],WAV_BUF_SIZE*2, DAC_ALIGN_12B_R );
+            HAL_TIM_Base_Start_IT(&DAC_sample_rate_tim);
+          
+            wav_data->DMA_START=1;
+          }
+        }
+        #endif
+      }
+
+    CURR_STATE=KEYBOARD_SCAN;  
+    break;
+
+    default:
+    #if __LOGGING_ENABLED
+    //f_puts("Err:SF00\r\n",&logFile);
+    f_puts("Unrecognised state!\r\n",&logFile);
+    #endif
+
+    Error_Handler();
+    break;
+   }
+    /* USER CODE END 3 */
+  } 
 }
 
 /**
@@ -381,7 +458,20 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  HAL_TIM_Base_Stop_IT(&led_tim);
+  if(led_tim.Instance!=0){
+    HAL_TIM_Base_Stop_IT(&led_tim);
+  }
+  #if __AUDIO_FX_ENABLED
+
+  if(hdac.Instance!=0){
+    HAL_DAC_Stop_DMA(&hdac, DAC_FX_OUT);
+  }
+  if(DAC_sample_rate_tim.Instance!=0){
+    HAL_TIM_Base_Stop_IT(&DAC_sample_rate_tim);
+  }
+  #endif
+  
+  NVIC_SystemReset();
   while (1)
   {
   }

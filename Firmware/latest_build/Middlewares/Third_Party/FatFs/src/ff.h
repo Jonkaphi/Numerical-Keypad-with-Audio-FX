@@ -80,7 +80,7 @@ typedef struct {
 	UINT	d32[_MAX_SS/4]; /* Force 32bits alignement */     
 	BYTE	d8[_MAX_SS];	/* Disk access window for Directory, FAT (and file data at tiny cfg) */  
   }win;
-	BYTE	fs_type;		/* FAT sub-type (0:Not mounted) */
+  	BYTE	fs_type;		/* FAT sub-type (0:Not mounted) */
 	BYTE	drv;			/* Physical drive number */
 	BYTE	csize;			/* Sectors per cluster (1,2,4...128) */
 	BYTE	n_fats;			/* Number of FAT copies (1 or 2) */

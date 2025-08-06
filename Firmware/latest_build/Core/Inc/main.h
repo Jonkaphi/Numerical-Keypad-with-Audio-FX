@@ -46,7 +46,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define default_addrs_ptr_keyboard 0x30000000UL
+//
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -100,10 +100,32 @@ void Error_Handler(void);
 #define ENC_A_Pin GPIO_PIN_6
 #define ENC_A_GPIO_Port GPIOB
 
+#define DAC_FX_OUT DAC_CHANNEL_1
+
+#define SYS_CLK_MHZ 48000U
+#define DEFAULT_PRESCALER 119U
+
 /* USER CODE BEGIN Private defines */
 #define POWER_ON_SDCARD HAL_GPIO_WritePin(GPIOB, CARD_SHUTDOWN_Pin, GPIO_PIN_SET);
 #define POWER_OFF_SDCARD HAL_GPIO_WritePin(GPIOB, CARD_SHUTDOWN_Pin, GPIO_PIN_RESET);
+
+#define POWER_ON_AUDIO_AMP HAL_GPIO_WritePin(GPIOA, AMP_SHUTDWN_Pin, GPIO_PIN_SET);
+#define POWER_OFF_AUDIO_AMP HAL_GPIO_WritePin(GPIOA, AMP_SHUTDWN_Pin, GPIO_PIN_RESET);
+
+#define GET_TIMER_PERIOD(X) (uint16_t)(((uint32_t)((SYS_CLK_MHZ/(DEFAULT_PRESCALER+1))*1000))/X);
+
+typedef uint8_t STATE;
+typedef uint32_t TIME;
+
+//FSM States
+#define KEYBOARD_SCAN 1U
+#define SEND_HID_REPORTS 2U
 /* USER CODE END Private defines */
+
+//Settings: Configure the features of the build
+#define __LOGGING_ENABLED 0
+#define __DEBUG 0
+#define __AUDIO_FX_ENABLED 1
 
 #ifdef __cplusplus
 }

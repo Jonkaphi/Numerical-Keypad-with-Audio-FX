@@ -2445,7 +2445,7 @@ static
 FRESULT validate (	/* FR_OK(0): The object is valid, !=0: Invalid */
 	void* obj		/* Pointer to the object FIL/DIR to check validity */
 )
-{
+{	
 	FIL *fil = (FIL*)obj;	/* Assuming offset of .fs and .id in the FIL/DIR structure is identical */
 
 
@@ -2532,7 +2532,9 @@ FRESULT f_open (
 #if !_FS_READONLY
 	DWORD dw, cl;
 #endif
-
+	if(fp->fs->fs_type>3){
+		__NOP();
+	}
 
 	if (!fp) return FR_INVALID_OBJECT;
 	fp->fs = 0;			/* Clear file object */
@@ -2667,7 +2669,9 @@ FRESULT f_read (
 	UINT rcnt, cc;
 	BYTE csect, *rbuff = (BYTE*)buff;
 
-
+	if(fp->fs->fs_type>3){
+		__NOP();
+	}
 	*br = 0;	/* Clear read byte counter */
 
 	res = validate(fp);							/* Check validity */

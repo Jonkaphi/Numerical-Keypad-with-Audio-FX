@@ -1,4 +1,4 @@
-#include "key_codes_HID.h"
+
 
 
 #ifndef KEY_SCAN_H
@@ -47,6 +47,10 @@ typedef struct
     int8_t media_fast_controls_HID_report[KEY_SCAN_HID_REPORT_MEDIA_SIZE];
     int8_t media_slow_controls_HID_report[KEY_SCAN_HID_REPORT_MEDIA_SIZE];//Report ID, MMKey.
     uint8_t highest_element;
+
+    
+    STATE MUTE_FX;
+   
     volatile uint8_t controls;
     volatile int8_t enc_count;
     volatile int8_t enc_fall_edges;
@@ -65,7 +69,7 @@ typedef IO_controls* IO_controls_handler;
   * @param keyboard_inst pointer to the IO_controls struct, modifies the curr and prev arrays
     * @retval none
 */
-void scan_keyboard(IO_controls_handler keyboard_inst);
+STATE scan_keyboard(IO_controls_handler keyboard_inst);
 
 /** 
   *  @brief Populates the HID report with the keycodes which will be send to th PC

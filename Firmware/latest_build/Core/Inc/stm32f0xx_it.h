@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "pc_cotrl_int.h"
 #include "key_scan.h"
+#include "fat_dac_interface.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -53,7 +54,10 @@ void SVC_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 void TIM7_IRQHandler(void);
+//void TIM6_IRQHandler(void);
 void USB_IRQHandler(void);
+void DMA1_Channel2_3_IRQHandler(void);
+void TIM6_DAC_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 void EXTI4_15_IRQHandler(void);

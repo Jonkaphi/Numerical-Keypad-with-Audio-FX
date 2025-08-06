@@ -19,10 +19,15 @@ const uint8_t keycode_array[7][5] = {{KEY_LEFT, KEY_NONE, KEY_DELETE, KEY_INSERT
   * @param keyboard_inst pointer to the IO_controls struct, modifies the curr and prev arrays
     * @retval none
 */
-void scan_keyboard(IO_controls_handler keyboard_inst){ 
-    __disable_irq();
-    uint8_t temp = 0; 
-    keyboard_inst->highest_element = 0;  
+STATE scan_keyboard(IO_controls_handler keyboard_inst){ 
+    //__disable_irq();
+    uint8_t temp = 0;
+    static TIME last_toggle;
+    STATE play_wav=0; 
+
+
+    keyboard_inst->highest_element = 0;
+
     for(uint8_t clm_offset = 0 ; clm_offset < 7;clm_offset++){
       
         HAL_GPIO_WritePin((GPIO_TypeDef*)(((clm_offset < 3)*((uint32_t)CLM_1__3_PORT)) + ((!(clm_offset < 3))*((uint32_t)CLM_4__7_PORT))), (clm_offset<3)*(CLM_1_Pin<<clm_offset) + (!(clm_offset<3))*(CLM_4_Pin<<(clm_offset-3)), GPIO_PIN_SET);//each next pin is times two mutiple of the previous
@@ -36,7 +41,9 @@ void scan_keyboard(IO_controls_handler keyboard_inst){
 
             temp = keyboard_inst->keyboard_matrix[clm_offset]; 
             keyboard_inst->curr_keycode_arry[clm_offset][row_offset] = (temp>>row_offset & 1)*keycode_array[clm_offset][row_offset];
-            
+            if((keyboard_inst->curr_keycode_arry[clm_offset][row_offset] > 0) && (keyboard_inst->prev_keycode_arry[clm_offset][row_offset] == 0)){
+                play_wav=1;
+            }
             if(keyboard_inst->highest_element == 0){
                 keyboard_inst->highest_element = (keyboard_inst->curr_keycode_arry[clm_offset][row_offset] != 0)*(&keyboard_inst->curr_keycode_arry[clm_offset][row_offset]-&keyboard_inst->curr_keycode_arry[0][0]);
             }else{
@@ -45,7 +52,13 @@ void scan_keyboard(IO_controls_handler keyboard_inst){
         }
 
     }
-    __enable_irq();
+    if(((keyboard_inst->curr_keycode_arry[6][4] > 0) && (keyboard_inst->curr_keycode_arry[5][0] > 0))&&(((TIME)HAL_GetTick()-last_toggle)>500)){
+        keyboard_inst->MUTE_FX=(keyboard_inst->MUTE_FX==0)?1:0;
+        last_toggle=(TIME)HAL_GetTick();
+        play_wav=0;
+    }
+    return play_wav;
+    //__enable_irq();
 }
 
 /** 
@@ -56,7 +69,7 @@ void scan_keyboard(IO_controls_handler keyboard_inst){
 void populate_HID_keycode_report(IO_controls_handler keyboard_inst){//(uint8_t * curr_keycode_arry, uint8_t * prev_keycode_arry, uint8_t * HID_data_packet, uint8_t * new_packet_stat,uint8_t array_size){
     
     //difference here is not only a controll variables it is also a array offset very bad
-    __disable_irq();
+    //__disable_irq();
     uint8_t difference = 0;
     static uint8_t prev_array_size;
     uint8_t HID_offset=0;
@@ -71,7 +84,7 @@ void populate_HID_keycode_report(IO_controls_handler keyboard_inst){//(uint8_t *
     if(keyboard_inst->highest_element >(colum_size*row_size)){
         //breakpoint due this being an error condition
         prev_array_size=colum_size*row_size;
-        __BKPT(0);
+        //__BKPT(0);
     }
 
     keyboard_inst->packet_update_flag = 0;
@@ -103,7 +116,7 @@ void populate_HID_keycode_report(IO_controls_handler keyboard_inst){//(uint8_t *
             break;
         }
     }
-    __enable_irq();
+    //__enable_irq();
  }
 
  /** 
@@ -113,7 +126,7 @@ void populate_HID_keycode_report(IO_controls_handler keyboard_inst){//(uint8_t *
 */
 void populat_HID_fast_media_controls_report(IO_controls_handler keyboard_inst){//[volatile uint8_t * bttn_controls, volatile int8_t * encoder_val, int8_t * HID_data_packet, uint8_t * new_packet_state){
     
-    __disable_irq();
+    //__disable_irq();
     
     //static uint8_t prev_bttn_controls;
     // static uint32_t last_tick;
@@ -148,12 +161,12 @@ void populat_HID_fast_media_controls_report(IO_controls_handler keyboard_inst){/
     //     keyboard_inst->controls = (keyboard_inst->controls&(0x01));
     //     last_tick=(uint32_t)HAL_GetTick();
     // }
-    __enable_irq();
+    //__enable_irq();
 }
 
 void populat_HID_slow_media_controls_report(IO_controls_handler keyboard_inst){//[volatile uint8_t * bttn_controls, volatile int8_t * encoder_val, int8_t * HID_data_packet, uint8_t * new_packet_state){
     
-    __disable_irq();
+    //__disable_irq();
     
     //static uint8_t prev_bttn_controls;
     
@@ -186,6 +199,6 @@ void populat_HID_slow_media_controls_report(IO_controls_handler keyboard_inst){/
     //clear flag to stop the population fucntion
     keyboard_inst->populate_media_slow_controls_flag=0;
 
-    __enable_irq();
+    //__enable_irq();
 }
 //

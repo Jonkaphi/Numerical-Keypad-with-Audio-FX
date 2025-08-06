@@ -117,7 +117,6 @@ DRESULT disk_read (
 )
 {
   DRESULT res;
- 
   res = disk.drv[pdrv]->disk_read(disk.lun[pdrv], buff, sector, count);
   return res;
 }

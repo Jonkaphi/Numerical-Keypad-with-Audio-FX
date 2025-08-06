@@ -60,11 +60,18 @@
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_FS;
 extern TIM_HandleTypeDef led_tim;
+
+extern TIM_HandleTypeDef DAC_sample_rate_tim;
+extern DAC_HandleTypeDef hdac;
+extern DMA_HandleTypeDef hdma_dac_ch1;
+
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EV */
 extern IO_controls_handler keyboard;
+extern fat_dac_handler wav_data;
 extern uint16_t Timer1, Timer2;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -79,7 +86,7 @@ void NMI_Handler(void)
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-   while (1)
+  while (1)
   {
   }
   /* USER CODE END NonMaskableInt_IRQn 1 */
@@ -91,11 +98,11 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+  NVIC_SystemReset();
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
-    __BKPT(0);
+    //__BKPT(0);
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
@@ -154,6 +161,53 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles DMA1 channel 2 and 3 interrupts.
+  */
+void DMA1_Channel2_3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel2_3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_dac_ch1);
+  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel2_3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM6 global and DAC channel underrun error interrupts.
+  */
+void TIM6_DAC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
+  
+  #if __AUDIO_FX_ENABLED
+  __disable_irq();
+
+  if(wav_data->bytes_to_read==0){
+    HAL_DAC_Stop_DMA(&hdac, DAC_FX_OUT);
+    HAL_TIM_Base_Stop_IT(&DAC_sample_rate_tim);
+    wav_data->DMA_START=0;
+    wav_data->PLAY_WAV_STATE_FLAG=0;
+    //__NOP();
+
+  }
+
+  wav_data->bytes_to_read-=(wav_data->bytes_to_read>0)*1;
+  wav_data->bytes_read++;
+
+  
+  /* USER CODE END TIM6_DAC_IRQn 0 */
+  HAL_DAC_IRQHandler(&hdac);
+  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
+  HAL_TIM_IRQHandler(&DAC_sample_rate_tim);
+  __enable_irq();
+  #endif
+  
+  /* USER CODE END TIM6_DAC_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM7 global interrupt.
   */
 void TIM7_IRQHandler(void)
@@ -167,6 +221,7 @@ void TIM7_IRQHandler(void)
 
   /* USER CODE END TIM7_IRQn 1 */
 }
+
 
 /* USER CODE BEGIN 1 */
   /* @brief This function handles EXTI line 4 to 15 interrupts.

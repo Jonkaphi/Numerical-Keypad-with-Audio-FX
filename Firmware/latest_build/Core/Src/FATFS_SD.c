@@ -126,6 +126,8 @@ static uint8_t SD_CheckPower(void)
 static bool SD_RxDataBlock(BYTE *buff, UINT len)
 {
   uint8_t token;
+  //since buff is zero indexed, len must be 512-1=511
+  len--;
   /* timeout 200ms */
   Timer1 = 200;
   /* loop until receive a response or timeout */
@@ -135,7 +137,7 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
   /* invalid response */
   if(token != 0xFE) return FALSE;
   /* receive data */
-  do {
+  do {  
     SPI_RxBytePtr(buff++);
   } while(len--);
   /* discard CRC */

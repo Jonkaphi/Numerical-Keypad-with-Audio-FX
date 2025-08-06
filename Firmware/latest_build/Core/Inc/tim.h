@@ -33,12 +33,14 @@ extern "C" {
 /* USER CODE END Includes */
 
 extern TIM_HandleTypeDef led_tim;
+extern TIM_HandleTypeDef DAC_sample_rate_tim;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_LED_TIM_Init(void);
+void MX_WAV_SAMPLE_RATE_TIM_Init(uint16_t prescaler, uint16_t period);
 
 /* USER CODE BEGIN Prototypes */
 

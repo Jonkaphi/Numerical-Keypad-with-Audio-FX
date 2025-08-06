@@ -62,7 +62,7 @@ void PUSH_BTN_IT_Handler(uint16_t GPIO_Pin, IO_controls_handler keyboard){
     // 0x09, 0xB6,        //   Usage (Scan Previous Track)
     //it seems that the toogle for the mute changes state for each pulse of the operations for the usage so to mute we do 1 thn 0 and unmute need to send another 1 then 0
     keyboard->controls |= (GPIO_Pin == MUTE_Pin )*(1<<0);
-    keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin && (((keyboard->controls)&0x04) == 0x04))*(1<<3) ;
+    keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin && (((keyboard->controls)&0x04)==0x04))*(1<<3) ;
     keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin && (((keyboard->controls)&0x02)==0x02))*(1<<2);
     keyboard->controls |=(GPIO_Pin == PLAY_PAUSE_Pin )*(1<<1);
 
