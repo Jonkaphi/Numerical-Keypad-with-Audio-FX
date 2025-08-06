@@ -16,4 +16,5 @@ The lower level sd card interface for the file system used in the project was ta
 * Audio streaming and polling of the key inputs is done on a single thread, resulting in less than satisfactory responsiveness
 
 ## Future work
-* Generala rework of the PCB and move to a MCU series that include SDIO for the SD card, has more flash to as to implement some sort of RTOS, and or has a second core to handle the audio streaming.
+* Move to a MCU series that include SDIO for the SD card, has more flash to as to implement some sort of RTOS, and or has a second core to handle the audio streaming.
+* General rework of the PCB, redesign of the audio front-end to have better amplification of the DAC data stream.
