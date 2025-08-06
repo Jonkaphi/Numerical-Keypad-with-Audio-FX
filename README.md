@@ -1,16 +1,19 @@
 # Mechanical Numerical Keypad with local Audio FX
 The desire to make this little keypad came from idea to reuse a some of the parts from a broken keyboard someone gave me. Another justification was that it was tangentially tied to another future project for a handheld cyberdeck computer. Since for the form factor I am aiming for it would need to be something more bespoke.
 
-The extra little feature of having audio fx being played locally on the keyboard with each button press, was from one of the commenters on reddit related to a post I made for it at the start of the project. The sound files will be read from the placed SD card.
+The extra little feature of having audio fx being played locally on the keyboard with each button press, was from one of the commenters on reddit related to a post I made for it at the start of the project. The sound files will be read from the placed SD card. Currently the audio that can be played is at 8 kHz sample rate with 16 bit signed PCM, if you want your file to be play make sure to rename the wav file to "fx_8k.wav"
 
 The lower level sd card interface for the file system used in the project was taken from Khaled Magdy's post on ![DeepBlueMbedded](https://deepbluembedded.com/stm32-sd-card-spi-fatfs-tutorial-examples/)
+
 ### Top View
 ![kuk35721-1920](https://github.com/user-attachments/assets/1ec762f2-8f67-406b-99af-951139aefd11)
 ### Bottom View
 ![PXL_20250710_151807012](https://github.com/user-attachments/assets/13076207-b315-4b91-a7cb-812efdf57400)
 
-
-## Issues as of 07/2025
+## Issues as of 08/2025
 * Current USB port part is not vertically offset, which collides with the PCB, read "Connectors" page in the schematic.
 * Encoder for PC system audio still glitches at times, but its significantly better compared to previous build versions
-* Audio front-end has not been tested, operation not verified
+* Audio streaming and polling of the key inputs is done on a single thread, resulting in less than satisfactory responsiveness
+
+## Future work
+* Generala rework of the PCB and move to a MCU series that include SDIO for the SD card, has more flash to as to implement some sort of RTOS, and or has a second core to handle the audio streaming.
