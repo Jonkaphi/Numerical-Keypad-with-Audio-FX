@@ -2746,7 +2746,7 @@
 		)
 		(uuid "0ceed595-31b6-4c23-b6c3-7f4fa88a746b")
 	)
-	(text "NOTE: THE USB SELECTED USB PORT (J2) IS NOT VERTICALLY OFFSET, \nIF YOU WANT TO USE IT MAKE SURE TO ADD A CUT OFF IN THE PCB.\nMY PCB HAS A MISTAKE!!!!\n"
+	(text "FIX ME: THE USB SELECTED USB PORT (J2) IS NOT VERTICALLY OFFSET, \nIF YOU WANT TO USE IT MAKE SURE TO ADD A CUT OFF IN THE PCB.\nMY PCB HAS A MISTAKE!!!!\n"
 		(exclude_from_sim no)
 		(at 163.322 121.92 0)
 		(effects
@@ -2769,6 +2769,16 @@
 			)
 		)
 		(uuid "bfd79c50-cf6d-4bbd-9050-e3d73478898a")
+	)
+	(text "FIX ME: Transistor does not completely swicth off, \ncard cannot be power cycled"
+		(exclude_from_sim no)
+		(at 114.046 31.75 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "d61ec44b-d661-4da3-a31a-c7e3109541a9")
 	)
 	(text "SD-Card slot"
 		(exclude_from_sim no)
