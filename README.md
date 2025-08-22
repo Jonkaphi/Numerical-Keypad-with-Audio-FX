@@ -18,3 +18,5 @@ The lower level sd card interface for the file system used in the project was ta
 ## Future work
 * Move to a MCU series that include SDIO for the SD card, has more flash to as to implement some sort of RTOS, and or has a second core to handle the audio streaming.
 * General rework of the PCB, redesign of the audio front-end to have better amplification of the DAC data stream.
+* Make a desktop app that can modify the functionality of pad, such as change the keycodes for each key button, selectable profiles, etc.
+
