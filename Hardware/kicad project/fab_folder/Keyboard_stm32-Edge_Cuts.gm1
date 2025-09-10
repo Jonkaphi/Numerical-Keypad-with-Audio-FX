@@ -1,0 +1,23 @@
+G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,8.0.3*
+G04 #@! TF.CreationDate,2024-08-13T11:44:21+03:00*
+G04 #@! TF.ProjectId,Keyboard_stm32,4b657962-6f61-4726-945f-73746d33322e,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 8.0.3) date 2024-08-13 11:44:21*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 #@! TA.AperFunction,Profile*
+%ADD10C,0.050000*%
+G04 #@! TD*
+G04 APERTURE END LIST*
+D10*
+X63150000Y-26850000D02*
+X231450000Y-26850000D01*
+X231450000Y-152550000D01*
+X63150000Y-152550000D01*
+X63150000Y-26850000D01*
+M02*

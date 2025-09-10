@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"name": "latest_build",
+			"path": "latest_build"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"key_scan.h": "c",
+			"dac.h": "c",
+			"main.h": "c",
+			"compare": "c",
+			"cstdint": "c",
+			"tim.h": "c",
+			"stm32f0xx_it.h": "c",
+			"stm32f0xx_hal_def.h": "c",
+			"exception": "c",
+			"memory_resource": "c",
+			"format": "c",
+			"iosfwd": "c",
+			"new": "c",
+			"ostream": "c",
+			"print": "c",
+			"sstream": "c",
+			"stop_token": "c",
+			"streambuf": "c"
+		},
+		"cortex-debug.variableUseNaturalFormat": true
+	}
+}

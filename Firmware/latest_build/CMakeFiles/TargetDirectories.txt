@@ -1,0 +1,8 @@
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/CMakeFiles/latest_build.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/CMakeFiles/edit_cache.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/CMakeFiles/rebuild_cache.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/cmake/stm32cubemx/CMakeFiles/FatFs.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
+/Users/yoan/Documents/GitHub/Numerical-Keypad-with-Audio-FX_PRIV/Firmware/latest_build/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir

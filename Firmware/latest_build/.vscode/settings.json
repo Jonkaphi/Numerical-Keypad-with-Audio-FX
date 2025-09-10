@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "dma.h": "c",
+        "fatfs_sd.h": "c"
+    }
+}
