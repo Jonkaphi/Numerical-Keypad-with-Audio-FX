@@ -6,9 +6,11 @@ The extra little feature of having audio fx being played locally on the keyboard
 The lower level sd card interface for the file system used in the project was made by Khaled Magdy's post on ![DeepBlueMbedded](https://deepbluembedded.com/stm32-sd-card-spi-fatfs-tutorial-examples/)
 
 ### Top View
-![kuk35721-1920](https://github.com/user-attachments/assets/1ec762f2-8f67-406b-99af-951139aefd11)
+![kuk35721-1920](https://github.com/user-attachments/assets/1b89741d-6d17-401e-94da-00814ed46c40)
+
 ### Bottom View
-![PXL_20250710_151807012](https://github.com/user-attachments/assets/13076207-b315-4b91-a7cb-812efdf57400)
+
+![PXL_20250710_151807012](https://github.com/user-attachments/assets/76e03539-6e57-440e-9c81-85b7b6255b48)
 
 ## Issues as of 08/2025
 * Current USB port part is not vertically offset, which collides with the PCB, read "Connectors" page in the schematic.
