@@ -3,7 +3,7 @@ The desire to make this little keypad came from idea to reuse a some of the part
 
 The extra little feature of having audio fx being played locally on the keyboard with each button press, was from one of the commenters on reddit related to a post I made for it at the start of the project. The sound files will be read from the placed SD card. Currently the audio that can be played is from 8 to 16 kHz kHz sample rate with 16 bit signed PCM, if you want your file to be play make sure to replace the string with the name of the file you want in "const FILE_NAME audiofile_path[10] = "fx_8k.wav";" on line 74 in "main.c"
 
-The lower level sd card interface for the file system used in the project was made by Khaled Magdy's post on ![DeepBlueMbedded](https://deepbluembedded.com/stm32-sd-card-spi-fatfs-tutorial-examples/)
+The lower level sd card interface for the file system used in the project was made by Khaled Magdy in their post on ![DeepBlueMbedded](https://deepbluembedded.com/stm32-sd-card-spi-fatfs-tutorial-examples/)
 
 ### Top View
 ![kuk35721-1920](https://github.com/user-attachments/assets/1b89741d-6d17-401e-94da-00814ed46c40)
