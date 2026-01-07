@@ -1,7 +1,7 @@
 # Mechanical Numerical Keypad with local Audio FX
-The desire to make this little keypad came from idea to reuse a some of the parts from a broken keyboard someone gave me. Another justification was that it was tangentially tied to another future project for a handheld cyberdeck computer. Since for the form factor I am aiming for it would need to be something more bespoke.
+The desire to make this little keypad came from idea to reuse a some of the parts from a broken keyboard someone gave me.
 
-The extra little feature of having audio fx being played locally on the keyboard with each button press, was from one of the commenters on reddit related to a post I made for it at the start of the project. The sound files will be read from the placed SD card. Currently the audio that can be played is from 8 to 16 kHz kHz sample rate with 16 bit signed PCM, if you want your file to be play make sure to replace the string with the name of the file you want in "const FILE_NAME audiofile_path[10] = "fx_8k.wav";" on line 74 in "main.c"
+The extra little feature of having audio fx being played locally on the keyboard with each button press, was from one of the commenters on reddit related to a post. The sound files will be read from the placed SD card. Currently the audio that can be played is from 8 to 16 kHz kHz sample rate with 16 bit signed PCM.
 
 The lower level sd card interface for the file system used in the project was made by Khaled Magdy in their post on ![DeepBlueMbedded](https://deepbluembedded.com/stm32-sd-card-spi-fatfs-tutorial-examples/)
 
@@ -20,4 +20,3 @@ The lower level sd card interface for the file system used in the project was ma
 ## Future work
 * Move to a MCU series that include SDIO for the SD card, has more flash to as to implement some sort of RTOS, and or has a second core to handle the audio streaming.
 * General rework of the PCB, redesign of the audio front-end to have better amplification of the DAC data stream.
-* Make a desktop app that can modify the functionality of pad, such as change the keycodes for each key button, selectable profiles, etc.
